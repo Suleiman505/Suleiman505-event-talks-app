@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Pulse</title>
+    <meta name="description" content="Stay up to date with the latest BigQuery release notes, track features, changes, and deprecations, and share updates on Twitter/X instantly.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Background Decorators -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+
+    <!-- Header Navigation -->
+    <header class="main-header" id="header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="pulse-icon-wrapper">
+                    <i class="fa-solid fa-database logo-icon"></i>
+                    <span class="ping-indicator"></span>
+                </div>
+                <div class="logo-text">
+                    <h1>BigQuery <span>Release Pulse</span></h1>
+                    <p class="status-indicator">Live Updates Feed</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="cache-status-container">
+                    <span id="cache-badge" class="cache-badge badge-cached">Cached</span>
+                    <span id="cache-age" class="cache-age">Checking...</span>
+                </div>
+                <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
+                    <i class="fa-solid fa-arrows-rotate refresh-icon"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <!-- Stats Dashboard -->
+        <section class="stats-section" id="stats-grid">
+            <div class="stat-card" data-stat="all">
+                <div class="stat-header">
+                    <span class="stat-title">Total Updates</span>
+                    <i class="fa-solid fa-list-check stat-icon color-all"></i>
+                </div>
+                <div class="stat-value" id="stat-total">-</div>
+                <div class="stat-desc">Loaded from Google Cloud</div>
+            </div>
+            <div class="stat-card" data-stat="Feature">
+                <div class="stat-header">
+                    <span class="stat-title">Features</span>
+                    <i class="fa-solid fa-rocket stat-icon color-feature"></i>
+                </div>
+                <div class="stat-value" id="stat-features">-</div>
+                <div class="stat-desc">New capabilities</div>
+            </div>
+            <div class="stat-card" data-stat="Change">
+                <div class="stat-header">
+                    <span class="stat-title">Changes</span>
+                    <i class="fa-solid fa-arrows-spin stat-icon color-change"></i>
+                </div>
+                <div class="stat-value" id="stat-changes">-</div>
+                <div class="stat-desc">Behavioral updates</div>
+            </div>
+            <div class="stat-card" data-stat="Issue">
+                <div class="stat-header">
+                    <span class="stat-title">Issues & Fixes</span>
+                    <i class="fa-solid fa-bug stat-icon color-issue"></i>
+                </div>
+                <div class="stat-value" id="stat-issues">-</div>
+                <div class="stat-desc">Known issues & resolutions</div>
+            </div>
+        </section>
+
+        <!-- Filters & Search Section -->
+        <section class="filter-section">
+            <div class="filter-wrapper">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search updates (e.g. Gemini, partition, storage)..." autocomplete="off">
+                    <button id="clear-search" class="clear-btn" style="display: none;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                
+                <div class="filter-pills-container">
+                    <button class="filter-pill active" data-type="all">
+                        <span>All</span>
+                        <span class="pill-count" id="count-all">0</span>
+                    </button>
+                    <button class="filter-pill" data-type="Feature">
+                        <i class="fa-solid fa-circle-nodes dot-feature"></i>
+                        <span>Features</span>
+                        <span class="pill-count" id="count-feature">0</span>
+                    </button>
+                    <button class="filter-pill" data-type="Change">
+                        <i class="fa-solid fa-circle-nodes dot-change"></i>
+                        <span>Changes</span>
+                        <span class="pill-count" id="count-change">0</span>
+                    </button>
+                    <button class="filter-pill" data-type="Issue">
+                        <i class="fa-solid fa-circle-nodes dot-issue"></i>
+                        <span>Issues</span>
+                        <span class="pill-count" id="count-issue">0</span>
+                    </button>
+                    <button class="filter-pill" data-type="Deprecation">
+                        <i class="fa-solid fa-circle-nodes dot-deprecation"></i>
+                        <span>Deprecations</span>
+                        <span class="pill-count" id="count-deprecation">0</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline Section -->
+        <section class="timeline-section">
+            <!-- Loading State -->
+            <div id="timeline-loading" class="timeline-loading-state">
+                <div class="spinner-orbit">
+                    <div class="orbit-item"></div>
+                    <div class="orbit-item"></div>
+                    <div class="orbit-item"></div>
+                </div>
+                <p>Syncing release feed...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="timeline-empty" class="timeline-empty-state" style="display: none;">
+                <div class="empty-icon-wrapper">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <h3>No updates found</h3>
+                <p>Try adjusting your search criteria or refresh to fetch the latest entries.</p>
+                <button id="empty-reset-btn" class="btn btn-secondary">Clear Filters</button>
+            </div>
+
+            <!-- Timeline Container -->
+            <div id="timeline-container" class="timeline-container" style="display: none;">
+                <!-- Dynamically populated release notes cards -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Tweet Composer Modal -->
+    <div id="tweet-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-area">
+                    <i class="fa-brands fa-x-twitter tweet-logo"></i>
+                    <h2>Compose Update Tweet</h2>
+                </div>
+                <button id="modal-close" class="modal-close-btn" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tweet-card-preview">
+                    <div class="tweet-card-header">
+                        <div class="tweet-avatar">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <div class="tweet-author-info">
+                            <span class="author-name">BigQuery Pulse</span>
+                            <span class="author-handle">@BigQueryPulse</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tweet-textarea-wrapper">
+                        <textarea id="tweet-textarea" rows="5" maxlength="350" placeholder="What's happening?"></textarea>
+                    </div>
+                    
+                    <div class="tweet-card-footer">
+                        <div class="tweet-characters">
+                            <div class="progress-ring-container">
+                                <svg class="progress-ring" width="36" height="36">
+                                    <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="transparent" r="15" cx="18" cy="18"/>
+                                    <circle id="progress-circle" class="progress-ring-indicator" stroke="#6366f1" stroke-width="3.5" fill="transparent" r="15" cx="18" cy="18" stroke-dasharray="94.25" stroke-dashoffset="94.25"/>
+                                </svg>
+                                <span id="char-counter-text" class="char-count-text">280</span>
+                            </div>
+                        </div>
+                        <span id="char-limit-warning" class="char-warning-msg"></span>
+                    </div>
+                </div>
+
+                <div class="tweet-tips">
+                    <p><i class="fa-solid fa-lightbulb tip-icon"></i> <strong>Tip:</strong> Keep links intact. Twitter counts all URLs as 23 characters.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="tweet-cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button id="tweet-submit-btn" class="btn btn-tweet">
+                    <i class="fa-brands fa-x-twitter"></i>
+                    <span>Share on X</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast System -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Canvas for Confetti -->
+    <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
+
+    <footer class="footer">
+        <p>© 2026 BigQuery Release Pulse Dashboard. Made for Google Cloud Administrators.</p>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
